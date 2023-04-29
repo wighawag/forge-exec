@@ -10,7 +10,7 @@ Install `forge-exec` as git submodules in your foundry project.
 forge install wighawag/forge-exec
 ```
 
-Install `forge-exec-ipc-client` on your machine, see [release files](https://github.com/wighawag/forge-exec/releases/tag/forge-exec-ipc-client-v0.0.2)
+Install `forge-exec-ipc-client` on your machine, see [release files](https://github.com/wighawag/forge-exec/releases/tag/forge-exec-ipc-client-v0.1.0)
 
 This need to be in your `PATH`
 
