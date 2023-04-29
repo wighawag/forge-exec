@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# from: https://stackoverflow.com/a/246128
+SOURCE=${BASH_SOURCE[0]}
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+  SOURCE=$(readlink "$SOURCE")
+  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+
+
+PLATFORM="$(uname -s)"
+EXT=""
+case $PLATFORM in
+    Linux)
+    PLATFORM="linux"
+    ;;
+    Darwin)
+    PLATFORM="darwin"
+    ;;
+    MINGW*)
+    EXT="exe"
+    PLATFORM="win32"
+    ;;
+    *)
+    err "unsupported platform: $PLATFORM"
+    ;;
+esac
+
+ARCHITECTURE="$(uname -m)"
+if [ "${ARCHITECTURE}" = "x86_64" ]; then
+    # Redirect stderr to /dev/null to avoid printing errors if non Rosetta.
+    if [ "$(sysctl -n sysctl.proc_translated 2>/dev/null)" = "1" ]; then
+    ARCHITECTURE="arm64" # Rosetta.
+    else
+    ARCHITECTURE="amd64" # Intel.
+    fi
+elif [ "${ARCHITECTURE}" = "arm64" ] ||[ "${ARCHITECTURE}" = "aarch64" ] ; then
+    ARCHITECTURE="arm64" # Arm.
+else
+    ARCHITECTURE="amd64" # Amd.
+fi
+
+TARGET=x86_64-unknown-linux-musl
+if [ "${PLATFORM}" = "win32" ]; then
+    TARGET=x86_64-pc-windows-msvc
+elif [ "${PLATFORM}" = "darwin" ]; then
+    if [ "${ARCHITECTURE}" = "arm64" ]; then
+        TARGET=aarch64-apple-darwin
+    else
+        TARGET=x86_64-apple-darwin
+    fi
+fi
+
+
+$DIR/${TARGET}/forge-exec-ipc-client${EXT} $@

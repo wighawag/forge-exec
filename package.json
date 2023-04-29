@@ -1,0 +1,21 @@
+{
+  "name": "forge-exec",
+  "version": "0.1.8",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wighawag/forge-exec"
+  },
+  "homepage": "https://github.com/wighawag/forge-exec",
+  "files": [
+    "src",
+    "prepare.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "forge-exec-prepare": "./prepare.js"
+  },
+  "peerDependencies": {
+    "forge-exec-ipc-client": "0.0.2"
+  }
+}

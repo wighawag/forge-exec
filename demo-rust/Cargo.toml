@@ -1,0 +1,15 @@
+[package]
+name = "forge-exec-ipc-server-rust-demo"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+ interprocess = "1.2.1"
+ anyhow = "1.0.70"
+ ethabi = "18.0.0"
+ hex = "0.4.3"
+
+[[bin]]
+path= "example.rs"
+name= "example"

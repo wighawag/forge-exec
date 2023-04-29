@@ -1,0 +1,4 @@
+/target
+/bin/*
+!bin/forge-exec-ipc-client
+!bin/download.sh
