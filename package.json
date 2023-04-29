@@ -1,6 +1,6 @@
 {
   "name": "forge-exec",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/wighawag/forge-exec"
@@ -16,6 +16,6 @@
     "forge-exec-prepare": "./prepare.js"
   },
   "peerDependencies": {
-    "forge-exec-ipc-client": "0.0.2"
+    "forge-exec-ipc-client": "0.1.0"
   }
 }
