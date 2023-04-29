@@ -6,24 +6,30 @@ import {Vm} from "forge-std/Vm.sol";
 /// @notice Library to execute an external program using a 2-way communication channel
 /// This allow more complex scripting using any languages that support socket/named pipe communication
 library Exec {
+
+    // --------------------------------------------------------------------------------------------
+    // Constants
+    // --------------------------------------------------------------------------------------------
     Vm constant vm =
         Vm(address(bytes20(uint160(uint256(keccak256("hevm cheat code"))))));
+
+    // --------------------------------------------------------------------------------------------
+    // Public Interface
+    // --------------------------------------------------------------------------------------------
 
     /// @notice Execute an external program using a 2-way communication channel
     /// This allow the program to execute request in forge while being executed
     /// THis is achieved using an IPC channel created for this purpose.
     /// @param program path to the executable
     /// @param args the list of argument to pass to the `program`
-    /// @param broadcast whether we should broadcast the tx
     function execute(
         string memory program,
-        string[] memory args,
-        bool broadcast
+        string[] memory args
     ) internal returns (bytes memory result) {
         bytes memory init = init1193(program, args);
 
         // we get the  processID from `forge-exec-ipc-client`
-        // it should alwys be correct
+        // it should always be correct
         string memory processID = abi.decode(init, (string));
 
         // the response sent to the program as an hex encoded string
@@ -40,8 +46,10 @@ library Exec {
 
             // TODO (for all abi.decode below)
             // we would like to try catch abi.decode (See https://github.com/ethereum/solidity/issues/10381)
-            // so we can terminate the program if an error happen here
-            // for now the program should have a tineout mechanism to exit on its own if no replies comes in
+            // so we can terminate the program if an error happen in the decoding
+            // this is especially important since if we revert here we won't be able to tell the executing process to terminate
+            // for now the program should have a timeout mechanism to exit on its own if no replies comes in from forge
+            // Note though that this might pause problem for someone debugging step by step
 
             // we get decode the outer layer, giving us the request type
             (uint256 requestType, bytes memory requestData) = abi.decode(
@@ -50,19 +58,20 @@ library Exec {
             );
 
             // Termination request
-            if (requestType == 0) {
+            if (requestType == 0x00) {
                 result = requestData;
                 // we stop right here and got our result field with the program's last response data
                 break;
             }
-            // Transaction Request
-            else if (requestType == 1) {
+            // Call Request
+            else if (requestType == 0xf1) {
                 (
+                    bool broadcast,
                     address from,
                     bytes memory data,
                     address payable to,
                     uint256 value
-                ) = abi.decode(requestData, (address, bytes, address, uint256));
+                ) = abi.decode(requestData, (bool, address, bytes, address, uint256));
                 handleSender(from, broadcast);
 
                 if (to != address(0)) {
@@ -79,11 +88,22 @@ library Exec {
                     response = vm.toString(abi.encode(addr != address(0), ""));
                 }
             }
+            // Static Call
+            else if (requestType == 0xfa) {
+                (
+                    address from,
+                    bytes memory data,
+                    address payable to
+                ) = abi.decode(requestData, (address, bytes, address));
+                handleSender(from, false);
+                (bool success, bytes memory returnData) = to.staticcall(data);
+                response = vm.toString(abi.encode(success, returnData));
+            }
             // Create
-            else if (requestType == 0xF0) {
-                (address from, bytes memory data, uint256 value) = abi.decode(
+            else if (requestType == 0xf0) {
+                (bool broadcast, address from, bytes memory data, uint256 value) = abi.decode(
                     requestData,
-                    (address, bytes, uint256)
+                    (bool, address, bytes, uint256)
                 );
                 handleSender(from, broadcast);
 
@@ -93,11 +113,25 @@ library Exec {
                 }
                 response = vm.toString(addr);
             }
-            // Send
-            else if (requestType == 2) {
-                (address from, address payable to, uint256 value) = abi.decode(
+            // Create2
+            else if (requestType == 0xf5) {
+                (bool broadcast, address from, bytes memory data, uint256 value, bytes32 salt) = abi.decode(
                     requestData,
-                    (address, address, uint256)
+                    (bool, address, bytes, uint256, bytes32)
+                );
+                handleSender(from, broadcast);
+
+                address addr;
+                assembly {
+                    addr := create2(value, add(data, 0x20), mload(data), salt)
+                }
+                response = vm.toString(addr);
+            }
+            // Send
+            else if (requestType == 0xf100) {
+                (bool broadcast, address from, address payable to, uint256 value) = abi.decode(
+                    requestData,
+                    (bool, address, address, uint256)
                 );
                 handleSender(from, broadcast);
 
@@ -114,12 +148,15 @@ library Exec {
         }
     }
 
+
+    // --------------------------------------------------------------------------------------------
+    // Internal
+    // --------------------------------------------------------------------------------------------
+
     function handleSender(address from, bool broadcast) internal {
         if (broadcast) {
             vm.broadcast(from);
         } else if (from != address(0)) {
-            // if we do not broadcast, we can prank the address to act as if we had the private key
-            // TODO make it an option in the request data ?
             vm.prank(from, from);
         }
     }
