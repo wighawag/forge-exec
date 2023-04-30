@@ -36,7 +36,7 @@ import {Exec} from "forge-exec/Exec.sol";
 
 ```solidity
 string[] memory args = new string[](1);
-args[0] = "./example.js";
+args[0] = "example.js";
 bytes memory result = Exec.execute("node", args, false); // the third parameter (false) tell whether to broadcast any tx or not
 ```
 
@@ -58,6 +58,12 @@ Then install `forge-exec-ipc-server` package which will let the script to commun
 
 ```bash
 npm i -D forge-exec-ipc-server
+```
+
+Let's also add [viem](https://viem.sh)
+
+```bash
+npm i -D viem
 ```
 
 Now you can write your js script this way
