@@ -109,6 +109,31 @@ execute(async (forge) => {
 
 See the [demo repo](https://github.com/wighawag/forge-exec-demo)
 
+`forge-exec` comes as an npm package to and it contains a utility to ensure the `forge-exec-ipc-client` binary is in the path.
+
+1. install `forge-exec`
+
+  ```bash
+  npm i -D forge-exec
+  ```
+
+2. add `forge-exec-prepare` to your prepare script
+
+  ```json
+  {
+    "name":  "your-package-name",
+    "dependencies": {
+      "forge-exec": "^0.1.12"
+    },
+    "scripts": {
+      "prepare": "forge-exec-prepare",
+      "test": "forge test"
+    }
+  }
+  ```
+
+This way any npm script like `test` in the package json above, will have `forge-exec-ipc-client` in its PATH
+
 ## Rust
 
 `forge-exec` is agnostic to what program you execute, you just need to follow the ipc communication protocol. you can find a very basic rust example in the [demo-rust folder](./demo-rust/)
