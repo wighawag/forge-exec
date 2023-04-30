@@ -138,7 +138,7 @@ library Exec {
                 response = vm.toString(account.code);
             }
             // GetCodeHash(address)
-            else if (requestType == 0x3c) {
+            else if (requestType == 0x3f) {
                 address account = abi.decode(requestData, (address));
                 response = vm.toString(account.codehash);
             }
