@@ -50,37 +50,51 @@ bytes memory result = Exec.execute("node", args, false); // the third parameter 
 
 Setup your js project with npm
 
-```
+```bash
 npm init
 ```
 
 Then install `forge-exec-ipc-server` package which will let the script to communicate back with forge
 
-```
+```bash
 npm i -D forge-exec-ipc-server
 ```
 
 Now you can write your js script this way
 
 ```js
+// @ts-check
 import { execute } from "forge-exec-ipc-server";
+import { encodeDeployData, encodeFunctionData } from 'viem';
+
+import fs from 'fs';
+const Counter = JSON.parse(fs.readFileSync('out/Counter.sol/Counter.json', 'utf-8'));
 
 execute(async (forge) => {
-  const address = await forge.create({
-    from: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-    data: "0x608060405234801561001057600080fd5b5060f78061001f6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80633fb5c1cb1460415780638381f58a146053578063d09de08a14606d575b600080fd5b6051604c3660046083565b600055565b005b605b60005481565b60405190815260200160405180910390f35b6051600080549080607c83609b565b9190505550565b600060208284031215609457600080fd5b5035919050565b60006001820160ba57634e487b7160e01b600052601160045260246000fd5b506001019056fea2646970667358221220f0cfb2159c518c3da0ad864362bad5dc0715514a9ab679237253d506773a0a1b64736f6c63430008130033",
+  const counter = await forge.create({
+    data:encodeDeployData({abi: Counter.abi, args: [], bytecode: Counter.bytecode.object})
   });
-  console.log({ address: address });
+
+  await forge.call({
+    from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    to: counter,
+    data: encodeFunctionData({...Counter, functionName: 'setNumber', args: [42n]})
+  });
+
+  return {
+    types: [{
+      type: "address",
+    }],
+    values: [counter],
+  };
 });
 ```
-
-for now, only create, send, call and balance are implemented
 
 ### Example
 
 ## Javascript
 
-A demo repo can be found here where forge-exed is used both in test and script : 
+See the [demo repo](https://github.com/wighawag/forge-exec-demo)
 
 ## Rust
 
@@ -205,7 +219,7 @@ EOF
 
 # we ensure forge-exec-ipc-client is in the path
 # you can install it as mentioned in the README
-# or simply do to download them from github. (not that it will not put them in your PATH)
+# or simply download them from github. (not that this will not put them in your PATH)
 bash lib/forge-exec/forge-exec-ipc-client/bin/download.sh
 
 # in test
