@@ -77,16 +77,23 @@ import fs from 'fs';
 const Counter = JSON.parse(fs.readFileSync('out/Counter.sol/Counter.json', 'utf-8'));
 
 execute(async (forge) => {
+
+  // here we are create a new contract
+  // the list of function the forge provider support is the following:
+  // call, static_call, create, create2, balance, code, code_hash, code_size, block_hash, block_timestamp, block_number, chainid, send
   const counter = await forge.create({
     data:encodeDeployData({abi: Counter.abi, args: [], bytecode: Counter.bytecode.object})
   });
 
+  // here we make a call from a specified account
   await forge.call({
     from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     to: counter,
     data: encodeFunctionData({...Counter, functionName: 'setNumber', args: [42n]})
   });
 
+  // forge-exec also support return value
+  // this is how forge-exec-ipc-server handle them, using viem abiEncode 
   return {
     types: [{
       type: "address",
