@@ -89,7 +89,7 @@ A demo repo can be found here where forge-exed is used both in test and script :
 
 ## Quick Start
 
-```
+```bash
 mkdir my-forge-exec-project;
 cd my-forge-exec-project;
 forge init;
@@ -113,7 +113,7 @@ cat > package.json <<EOF
   "private": true,
   "type": "module",
   "devDependencies": {
-    "forge-exec-ipc-server": "0.1.11",
+    "forge-exec-ipc-server": "0.1.12",
     "viem": "^0.3.14"
   },
   "scripts": {
@@ -153,6 +153,8 @@ execute(async (forge) => {
   };
 });
 EOF
+
+# An example test
 cat > test/Counter.t.sol <<EOF
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
@@ -161,7 +163,6 @@ import "forge-std/Test.sol";
 import "../src/Counter.sol";
 import "forge-exec/src/Exec.sol";
 
-# An example test
 contract CounterTest is Test {
     Counter public counter;
     function setUp() public {
