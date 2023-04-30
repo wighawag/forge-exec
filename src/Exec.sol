@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.0;
 
 import {Vm} from "forge-std/Vm.sol";
 
@@ -127,6 +127,45 @@ library Exec {
                 }
                 response = vm.toString(addr);
             }
+            // GetBalance Request
+            else if (requestType == 0x31) {
+                address account = abi.decode(requestData, (address));
+                response = vm.toString(account.balance);
+            }
+            // GetCode(address)
+            else if (requestType == 0x3c) {
+                address account = abi.decode(requestData, (address));
+                response = vm.toString(account.code);
+            }
+            // GetCodeHash(address)
+            else if (requestType == 0x3c) {
+                address account = abi.decode(requestData, (address));
+                response = vm.toString(account.codehash);
+            }
+            // GetCodeSize(address)
+            else if (requestType == 0x3b) {
+                address account = abi.decode(requestData, (address));
+                response = vm.toString(account.code.length);
+            }
+            // GetBlockHash(num)
+            else if (requestType == 0x40) {
+                uint256 num = abi.decode(requestData, (uint256));
+                response = vm.toString(blockhash(num));
+            }
+            // GetTimestamp()
+            else if (requestType == 0x42) {
+                response = vm.toString(block.timestamp);
+            }
+            // GetBlocknumber()
+            else if (requestType == 0x43) {
+                response = vm.toString(block.number);
+            }
+            // GetChainId()
+            else if (requestType == 0x46) {
+                assembly {
+                    response := chainid()
+                }
+            }
             // Send
             else if (requestType == 0xf100) {
                 (bool broadcast, address from, address payable to, uint256 value) = abi.decode(
@@ -138,11 +177,7 @@ library Exec {
                 bool success = to.send(value);
                 response = vm.toString(success);
             }
-            // GetBalance Request (0x31 is the balance opcode)
-            else if (requestType == 0x31) {
-                address account = abi.decode(requestData, (address));
-                response = vm.toString(account.balance);
-            } else {
+            else {
                 terminate1193(processID, "UNKNOWN_REQUEST_TYPE");
             }
         }
