@@ -14,7 +14,7 @@ Install `forge-exec-ipc-client` on your machine, see [release files](https://git
 
 This need to be in your `PATH`
 
-You can also easily instal from source, see folder: [forge-exec-ipc-client](./forge-exec-ipc-client/)
+You can also easily install it from source using cargo:
 
 ```bash
 cargo install forge-exec-ipc-client
@@ -78,19 +78,13 @@ for now, only create, send, call and balance are implemented
 
 ### Example
 
-We have example usage for both [tests](./demo-js/test/Exec.t.sol) and [scripts](./demo-js/script/ExecDemo.s.sol). See [example.js](./demo-js/example.js) in the [demo-js folder](./demo-js/)
+## Javascript
+
+A demo repo can be found here where forge-exed is used both in test and script : 
 
 ## Rust
 
 `forge-exec` is agnostic to what program you execute, you just need to follow the ipc communication protocol. you can find a very basic rust example in the [demo-rust folder](./demo-rust/)
-
-## Why?
-
-[Forge scripting](https://book.getfoundry.sh/tutorials/solidity-scripting.html) allow you to perform deployment task in solidity. With forge-exec you can run external program to deploy contracts and more. 
-
-## Development
-
-This project uses [Foundry](https://getfoundry.sh). See the [book](https://book.getfoundry.sh/getting-started/installation.html) for instructions on how to install and use Foundry.
 
 
 ## Quick Start
@@ -107,69 +101,115 @@ cat >> .gitignore <<EOF
 node_modules/
 .ipc.log
 EOF
+
+cat >> foundry.toml <<EOF
+
+ffi=true
+EOF
+
 cat > package.json <<EOF
 {
-  "name": "my-forge-exec-project",
+  "name": "forge-exec-demo",
   "private": true,
   "type": "module",
   "devDependencies": {
-    "forge-exec-ipc-server": "0.0.1"
+    "forge-exec-ipc-server": "0.1.11",
+    "viem": "^0.3.14"
   },
   "scripts": {
-    "execute": "forge script --ffi script/Counter.s.sol -vvvvv"
+    "execute": "forge script script/Counter.s.sol -vvvvv",
+    "test": "forge test"
   }
 }
 EOF
 
-cat >> remappings.txt <<EOF
-forge-exec/=lib/forge-exec/src/
-EOF
-
+# install dependencies
 pnpm i
 
-cat > script/example.js <<EOF
+cat > example.js <<EOF
 // @ts-check
 import { execute } from "forge-exec-ipc-server";
-execute(async (forge) => {
-  const results = await Promise.all([
-    forge.create({
-      from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-      data: "0x608060405234801561001057600080fd5b5060f78061001f6000396000f3fe6080604052348015600f57600080fd5b5060043610603c5760003560e01c80633fb5c1cb1460415780638381f58a146053578063d09de08a14606d575b600080fd5b6051604c3660046083565b600055565b005b605b60005481565b60405190815260200160405180910390f35b6051600080549080607c83609b565b9190505550565b600060208284031215609457600080fd5b5035919050565b60006001820160ba57634e487b7160e01b600052601160045260246000fd5b506001019056fea2646970667358221220f0cfb2159c518c3da0ad864362bad5dc0715514a9ab679237253d506773a0a1b64736f6c63430008130033",
-    }),
-  ]);
+import { encodeDeployData, encodeFunctionData } from 'viem';
 
-  const tx = await forge.send({
-    to: "0x0000000000000000000000000000000000000001",
-    value: 1n,
+import fs from 'fs';
+const Counter = JSON.parse(fs.readFileSync('out/Counter.sol/Counter.json', 'utf-8'));
+
+execute(async (forge) => {
+  const counter = await forge.create({
+    data:encodeDeployData({abi: Counter.abi, args: [], bytecode: Counter.bytecode.object})
   });
-  console.log({ tx: tx });
+
+  await forge.call({
+    from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    to: counter,
+    data: encodeFunctionData({...Counter, functionName: 'setNumber', args: [42n]})
+  });
+
   return {
-    types: results.map(() => ({
+    types: [{
       type: "address",
-    })),
-    values: results,
+    }],
+    values: [counter],
   };
 });
 EOF
+cat > test/Counter.t.sol <<EOF
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
+import "forge-std/Test.sol";
+import "../src/Counter.sol";
+import "forge-exec/src/Exec.sol";
+
+# An example test
+contract CounterTest is Test {
+    Counter public counter;
+    function setUp() public {
+        string[] memory args = new string[](1);
+        args[0] = "example.js";
+        bytes memory returnData = Exec.execute("node", args);
+        counter = abi.decode(returnData,(Counter));
+    }
+
+    function testIncrement() public {
+        counter.increment();
+        assertEq(counter.number(), 43);
+    }
+
+    function testSetNumber(uint256 x) public {
+        counter.setNumber(x);
+        assertEq(counter.number(), x);
+    }
+}
+EOF
+
+# An example script
 cat > script/Counter.s.sol <<EOF
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Script, console} from "forge-std/Script.sol";
-import {Exec} from "forge-exec/Exec.sol";
+import "forge-std/Script.sol";
+import {Exec} from "forge-exec/src/Exec.sol";
 
 contract CounterScript is Script {
     function setUp() public {}
 
     function run() public {
         string[] memory args = new string[](1);
-        args[0] = "./script/example.js";
-        Exec.execute("node", args, true);
+        args[0] = "example.js";
+        Exec.execute("node", args);
     }
 }
 EOF
 
 # we ensure forge-exec-ipc-client is in the path
 # you can install it as mentioned in the README
-PATH=lib/forge-exec/forge-exec-ipc-client/bin:$PATH pnpm execute;
+# or simply do to download them from github. (not that it will not put them in your PATH)
+bash lib/forge-exec/forge-exec-ipc-client/bin/download.sh
+
+# in test
+PATH=lib/forge-exec/forge-exec-ipc-client/bin:$PATH pnpm test
+
+# in script
+PATH=lib/forge-exec/forge-exec-ipc-client/bin:$PATH pnpm execute
 ```

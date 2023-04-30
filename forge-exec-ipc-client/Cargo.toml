@@ -1,6 +1,6 @@
 [package]
 name = "forge-exec-ipc-client"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "ipc client that let forge to connect to an ipc server while executing solidity"
 repository = "https://github.com/wighawag/forge-exec"

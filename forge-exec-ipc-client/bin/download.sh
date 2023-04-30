@@ -9,16 +9,16 @@ while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
-tag="v0.0.0-rc.10"
+tag="v0.1.1"
+release=forge-exec-ipc-client-${tag}
 targets=("aarch64-apple-darwin" "x86_64-apple-darwin" "x86_64-pc-windows-gnu" "x86_64-pc-windows-msvc" "x86_64-unknown-linux-musl")
 
 mkdir -p $DIR/downloads
 cd $DIR/downloads
 for target in "${targets[@]}"
 do
-https://github.com/wighawag/forge-exec/releases/download/v0.0.0-rc.10/forge-exec-ipc-client_v0.0.0-rc.10_x86_64-pc-windows-msvc.tar.gz
-    echo https://github.com/wighawag/forge-exec/releases/download/${tag}/forge-exec-ipc-client_${tag}_${target}.tar.gz
-    curl -L -O https://github.com/wighawag/forge-exec/releases/download/${tag}/forge-exec-ipc-client_${tag}_${target}.tar.gz
+    echo https://github.com/wighawag/forge-exec/releases/download/${release}/forge-exec-ipc-client_${tag}_${target}.tar.gz
+    curl -L -O https://github.com/wighawag/forge-exec/releases/download/${release}/forge-exec-ipc-client_${tag}_${target}.tar.gz
     mkdir -p ../$target; tar -xf forge-exec-ipc-client_${tag}_${target}.tar.gz --strip=1 -C ../$target
     rm forge-exec-ipc-client_${tag}_${target}.tar.gz
 done
