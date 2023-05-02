@@ -2,6 +2,8 @@
 
 **Execute programs from forge with am open 2-way communication channel between both**
 
+![js code](./carbon.png)
+
 ## Installation
 
 Install `forge-exec` as git submodules in your foundry project.
