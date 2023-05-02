@@ -39,7 +39,7 @@ import {Exec} from "forge-exec/Exec.sol";
 ```solidity
 string[] memory args = new string[](1);
 args[0] = "example.js";
-bytes memory result = Exec.execute("node", args, false); // the third parameter (false) tell whether to broadcast any tx or not
+bytes memory result = Exec.execute("node", args);
 ```
 
 1. You must enable [ffi](https://book.getfoundry.sh/cheatcodes/ffi.html) in order to use the library. You can either pass the `--ffi` flag to any forge commands you run (e.g. `forge script Script --ffi`), or you can add `ffi = true` to your `foundry.toml` file.
