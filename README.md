@@ -1,6 +1,6 @@
 # <h1 align="center"> forge-exec </h1>
 
-**Execute programs from forge with am open 2-way communication channel between both**
+**Execute programs from forge with an open 2-way communication channel between both**
 
 ![js code](./carbon.png)
 
